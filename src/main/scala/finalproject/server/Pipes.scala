@@ -5,26 +5,24 @@ import cats.effect.std.Console
 import cats.implicits._
 import fs2._
 
-/**
- * Trait containing all the pipes.
- */
+/** Trait containing all the pipes.
+  */
 trait Pipes[F[_]] {
-  /**
-   * A pipe that logs every element of the input stream, appending
-   * the given label as a suffix.
-   */
+
+  /** A pipe that logs every element of the input stream, appending
+    * the given label as a suffix.
+    */
   def log[A: Show](label: String): Pipe[F, A, A]
 
-  /**
-   * A pipe that parses a request from the given stream of bytes.
-   */
+  /** A pipe that parses a request from the given stream of bytes.
+    */
   def requests: Pipe[F, Byte, Request]
 }
 
 object Pipes {
-  /**
-   * Creates all the pipes for the given effect.
-   */
+
+  /** Creates all the pipes for the given effect.
+    */
   def impl[F[_]](implicit
       console: Console[F],
       functor: Functor[F],
@@ -55,24 +53,38 @@ object Pipes {
         s.pull.uncons.flatMap {
           case Some((chunk, restOfStream)) =>
             step match {
-              /**
-               * TODO #5
-               *
-               * Read bytes off this chunk up to the first SPACE.
-               *
-               * Create a String with those bytes and validate that it is a valid
-               * http method (use the 'validMethods' val defined above).
-               *
-               * If it is invalid, raise an error using Pull.raiseError; otherwise, move
-               * on to the next step with the remaining bytes.
-               *
-               * If the SPACE is not present in this chunk, append the chunk bytes to the buffer
-               * and continue recursively with the rest of the stream.
-               *
-               * Hint: look at step 1 for inspiration as it should be pretty similar.
-               */
+              /** TODO #5
+                *
+                * Read bytes off this chunk up to the first SPACE.
+                *
+                * Create a String with those bytes and validate that it is a valid
+                * http method (use the 'validMethods' val defined above).
+                *
+                * If it is invalid, raise an error using Pull.raiseError; otherwise, move
+                * on to the next step with the remaining bytes.
+                *
+                * If the SPACE is not present in this chunk, append the chunk bytes to the buffer
+                * and continue recursively with the rest of the stream.
+                *
+                * Hint: look at step 1 for inspiration as it should be pretty similar.
+                */
               case 0 => // reading method
-                ???
+                chunk.indexWhere(_ === SPACE) match {
+                  case Some(idx) =>
+                    val method = new String(chunk.take(idx).toArray)
+                    val res = if (validMethods.contains(method)) {
+                      val newReq = request.copy(method = method)
+                      go(
+                        restOfStream.cons(chunk.drop(idx + 1)),
+                        step + 1,
+                        newReq,
+                        Array.empty
+                      )
+                    } else Pull.raiseError[F](new Exception("Invalid method"))
+
+                    Pull.eval(Console[F].println(s"Method: $method")) >> res
+                  case None => go(restOfStream, step, request, buffer ++ chunk.toArray)
+                }
 
               case 1 => // reading url
                 chunk.indexWhere(_ === SPACE) match {

@@ -1,11 +1,9 @@
 package finalproject.server
 
 import cats._
-import cats.implicits._
 
-/**
- * An http request.
- */
+/** An http request.
+  */
 case class Request(
     method: String,
     url: String,
@@ -13,15 +11,13 @@ case class Request(
     headers: Map[String, String],
     body: Array[Byte]
 ) {
-  /**
-   * TODO #1
-   *
-   * Utility method for getting the content length of the request from the headers.
-   *
-   * If the header is not present or any error occurs, it returns 0.
-   */
+
+  /** Utility method for getting the content length of the request from the headers.
+    *
+    * If the header is not present or any error occurs, it returns 0.
+    */
   def contentLength: Int =
-    ???
+    headers.get("Content-Length").flatMap(it => it.toIntOption).getOrElse(0)
 
   override def toString: String = Request.show.show(this)
 }

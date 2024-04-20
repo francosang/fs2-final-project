@@ -2,33 +2,31 @@ package finalproject.server
 
 import cats._
 
-/**
- * An http response.
- */
+/** An http response.
+  */
 case class Response(
     httpVersion: String,
     status: Response.Status,
     body: Array[Byte],
     headers: Map[String, String]
 ) {
-  /**
-   * TODO #2
-   *
-   * Transforms the response into a valid byte representation as per HTTP specs.
-   */
-  def bytes: Array[Byte] =
-    ???
 
-  /**
-   * String representation of this response (mostly for debugging).
-   */
+  /** Transforms the response into a valid byte representation as per HTTP specs.
+    */
+  def bytes: Array[Byte] = {
+    (s"$httpVersion ${status.code} ${status.reason}\r\n" +
+      s"${headers.toList.map(it => s"${it._1}: ${it._2}\r\n").mkString}\r\n").getBytes.toList.toArray ++ body
+  }
+
+  /** String representation of this response (mostly for debugging).
+    */
   override def toString: String = Response.show.show(this)
 }
 
 object Response {
-  /**
-   * ADT (incomplete) for valid http status.
-   */
+
+  /** ADT (incomplete) for valid http status.
+    */
   abstract class Status(val code: Int, val reason: String)
   object Ok extends Status(200, "OK")
   object NotFound extends Status(404, "Not Found")
