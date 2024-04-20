@@ -53,9 +53,7 @@ object Pipes {
         s.pull.uncons.flatMap {
           case Some((chunk, restOfStream)) =>
             step match {
-              /** TODO #5
-                *
-                * Read bytes off this chunk up to the first SPACE.
+              /** Read bytes off this chunk up to the first SPACE.
                 *
                 * Create a String with those bytes and validate that it is a valid
                 * http method (use the 'validMethods' val defined above).
@@ -71,8 +69,8 @@ object Pipes {
               case 0 => // reading method
                 chunk.indexWhere(_ === SPACE) match {
                   case Some(idx) =>
-                    val method = new String(chunk.take(idx).toArray)
-                    val res = if (validMethods.contains(method)) {
+                    val method = new String(buffer ++ chunk.take(idx).toArray)
+                    if (validMethods.contains(method)) {
                       val newReq = request.copy(method = method)
                       go(
                         restOfStream.cons(chunk.drop(idx + 1)),
@@ -81,8 +79,6 @@ object Pipes {
                         Array.empty
                       )
                     } else Pull.raiseError[F](new Exception("Invalid method"))
-
-                    Pull.eval(Console[F].println(s"Method: $method")) >> res
                   case None => go(restOfStream, step, request, buffer ++ chunk.toArray)
                 }
 

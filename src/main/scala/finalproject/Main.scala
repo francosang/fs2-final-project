@@ -12,16 +12,22 @@ object Main extends IOApp.Simple {
     val host = "localhost"
     val port = 29000
 
-    /** TODO #7
-      *
-      * Write a request handler that produces a Response with the following:
+    /** Write a request handler that produces a Response with the following:
       * - The same httpVersion as the request
       * - An Ok status
       * - The same body as the request
       * - A header 'Content-Length' with the number of bytes in the body.
       */
-    val echoRequestHandler: Request => IO[Response] =
-      ???
+    val echoRequestHandler: Request => IO[Response] = { it =>
+      IO.pure(
+        Response(
+          httpVersion = it.httpVersion,
+          body = it.body,
+          headers = it.headers,
+          status = Response.Ok
+        )
+      )
+    }
 
     val server = Server[IO](maxConnections, host, port, echoRequestHandler)
 
